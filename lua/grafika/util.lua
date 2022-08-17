@@ -93,6 +93,7 @@ end
 
 ---Searches for highlight groups in a buffer and returns found regions
 ---It will return approximate rectangles when a highlight starts and finishes on different rows
+---This returns positions in virtual chars, not bytes
 ---@param buf integer Buffer to search in
 ---@param ns_id integer Namespace ID
 ---@param hl_group string Highlight group to search for
@@ -111,8 +112,34 @@ function M.find_hl_groups(buf, ns_id, hl_group)
         if opts.hl_group == hl_group then
             local start_row = extmark[2]
             local start_col = extmark[3]
-            local min_col, max_col = math.min(start_col, opts.end_col), math.max(start_col, opts.end_col)
-            table.insert(matches, types.Rect(min_col, start_row, max_col - min_col, opts.end_row - start_row + 1))
+            local height = opts.end_row - start_row + 1
+
+            -- convert byte positions into virtual positions
+            local lines = vim.api.nvim_buf_get_lines(buf, start_row, start_row + height, false)
+            local min_col, max_col = nil, 0
+            for idx, line in ipairs(lines) do
+                local start_at, end_at = 0, nil
+                if idx == 1 then
+                    start_at = start_col > 0 and vim.api.nvim_strwidth(string.sub(line, 0, start_col)) or 0
+                end
+                if idx == #lines then
+                    end_at = vim.api.nvim_strwidth(string.sub(line, 0, opts.end_col))
+                end
+                if end_at == nil then
+                    end_at = vim.api.nvim_strwidth(line)
+                end
+
+                if min_col == nil or start_at < min_col then
+                    min_col = start_at
+                end
+                if end_at > max_col then
+                    max_col = end_at
+                end
+            end
+
+            -- create a rect from virtual positions
+            local rect = types.Rect(min_col, start_row, max_col - min_col, opts.end_row - start_row + 1)
+            table.insert(matches, rect)
         end
     end
 
