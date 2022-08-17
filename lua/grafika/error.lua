@@ -6,4 +6,8 @@ function M.expect_param(fn, param, val)
     end
 end
 
+function M.log(message)
+    vim.api.nvim_err_writeln("grafika.nvim: " .. message)
+end
+
 return M

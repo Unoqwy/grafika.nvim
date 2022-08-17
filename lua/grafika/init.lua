@@ -23,6 +23,7 @@ M.HighlightInfo = types.HighlightInfo
 
 M.merge_h = util.merge_h
 M.rect_contains = util.rect_contains
+-- more generic utils should not be included in prelude
 
 M.create_buf = window.create_buf
 M.create_canvas = window.create_canvas
