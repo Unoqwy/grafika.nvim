@@ -176,6 +176,7 @@ end
 ---@field hl_info HighlightInfo[] Highlight info
 ---
 ---@field line fun(self: ComponentBuilder, str: string, hl_group?: string) Add a line
+---@field comp fun(self: ComponentBuilder, comp: Component) Add all the lines and highlight groups from a component
 ---@field append fun(self: ComponentBuilder, str: string, hl_group?: string) Append a string to previous line
 ---@field append_comp fun(self: ComponentBuilder, comp: Component) Append a component to previous line
 ---@field append_right fun(self: ComponentBuilder, str: string, hl_group?: string) Append to right of previous line
@@ -198,6 +199,18 @@ function M.ComponentBuilder()
         table.insert(o.lines, str)
         if hl_group ~= nil then
             table.insert(o.hl_info, M.HighlightInfo(M.Rect(0, #o.lines - 1, #str, 1), hl_group))
+        end
+    end
+
+    function o:comp(comp)
+        comp = vim.deepcopy(comp)
+        local initial_line_count = #o.lines
+        for _, line in ipairs(comp.lines) do
+            table.insert(o.lines, line)
+        end
+        for _, hl in ipairs(comp.hl_info) do
+            hl.rect.y = hl.rect.y + initial_line_count
+            table.insert(o.hl_info, hl)
         end
     end
 
