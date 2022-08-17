@@ -36,7 +36,7 @@ local canvas = gk.Canvas(buf)
 
 ### Component Builder
 
-As you just saw, grafika works by drawing components. The component builder is a powerful and covenient way easily create complex UIs with highlight groups, etc.
+As you just saw, grafika works by drawing components. The component builder is a powerful and convenient way easily create complex UIs with highlight groups, etc.
 
 ```lua
 local gk = require("grafika")
@@ -74,4 +74,45 @@ local content_comp = gk.Component({"Some content"})
 canvas:draw_component(header_comp, header_bounds)
 -- content_comp will be drawn starting at the 5th line and 2nd column. This creates some padding
 canvas:draw_component(content_comp, content_bounds)
+```
+
+### Popups
+
+Grafika can ease your life if you ever need to make popups.
+
+```lua
+local gk = require("grafika")
+
+local account = {
+    locked = false,
+    online_viewers = 1,
+    balance = 1381205.820,
+}
+
+local function draw_callback()
+    local builder = gk.ComponentBuilder()
+    builder:line("Account Information", "Header")
+    if not locked then
+        builder:line("Online Viewers", "InfoLabel")
+        builder:append(online_viewers, "InfoValue") -- number will be converted using tostring() automatically
+        builder:line("Balance", "InfoLabel")
+        builder:append(vim.fn.printf("%'.2f", account.balance), "InfoValue")
+    else
+        builder:line("This account was locked by the owner!", "AcountLocked")
+    end
+end
+
+local popup = gk.open_popup(draw_callback, {
+    ft = "myfiletype",
+    position = "center-editor", -- center in the middle of the editor. Available: center-win, last-cursor
+    focusable = false,
+})
+-- the popup is not displayed in the center of the editor, its size fitting the content
+
+-- for the following example, we assume `events.on()` allows you to subscribe to external changes
+events.on("account_lock_update", function(new_status)
+    account.locked = new_status
+    popup:update() -- this re-renders the popup
+    -- a line of the popup has been removed because the component is no longer the same size
+end)
 ```
