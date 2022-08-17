@@ -100,14 +100,16 @@ local function draw_callback()
     else
         builder:line("This account was locked by the owner!", "AcountLocked")
     end
+    return builder:build()
 end
 
 local popup = gk.open_popup(draw_callback, {
     ft = "myfiletype",
     position = "center-editor", -- center in the middle of the editor. Available: center-win, last-cursor
     focusable = false,
+    -- more options are available, check 'lua/grafika/window.lua'
 })
--- the popup is not displayed in the center of the editor, its size fitting the content
+-- the popup is now displayed in the center of the editor, its size fitting the content
 
 -- for the following example, we assume `events.on()` allows you to subscribe to external changes
 events.on("account_lock_update", function(new_status)
@@ -116,3 +118,71 @@ events.on("account_lock_update", function(new_status)
     -- a line of the popup has been removed because the component is no longer the same size
 end)
 ```
+
+## Extra Utils
+
+grafika.nvim contains some utilities that can prove to be useful.
+
+### Component from border chars
+
+Using the same `borderchars` format as many other plugins, you can create a component.
+
+```lua
+local borderchars = { "─", "│", "─", "│", "┌", "┐", "┘", "└" } -- this could be a simple string, or have only two elements
+local width = 20
+local height = 5
+
+-- create the component
+local border = require("grafika/util").create_comp_border(borderchars, width, height, {
+    -- these options are optional, you can just give borderchars, width, height if you don't need highlight
+    hl_border = "BorderHighlight",
+    hl_fill = "FillHighlight",
+    fill = " ", -- character to fill the "middle" of the box being created from border chars
+})
+```
+
+### Search for highlight regions
+
+You can search a buffer for highlight regions with a group name.
+
+```lua
+-- you can check out the following method, in-code docs are enough to cover it
+require("grafika/util").find_hl_groups(buf, ns_id, hl_group)
+
+-- it's also available from a canvas, you don't need to pass a buf nor ns_id for it
+canvas:find_hl_groups(hl_group)
+
+-- it's available from a popup as well
+popup:find_hl_groups(hl_group)
+```
+
+### Popup Auto Child
+
+Using the above util (search for highlight regions), you can create a child popup from an existing one by searching for a region via highlight group.
+
+```lua
+local gk = require("grafika")
+
+local function draw_callback()
+    local builder = gk.ComponentBuilder()
+    builder:line("Write your name below:", "NameInputHeader")
+    builder:line(">> ", "NameInputPrefix")
+    builder:append(string.rep(" ", 10), "NameInputPrompt")
+    return builder:build()
+end
+
+local popup = gk.open_popup(draw_callback, {})
+
+local auto_child, rect = popup:auto_child("NameInputPrompt")
+-- 'auto_child' is a window options table containing all the required positionning settings
+
+local winopts = {
+    style = "minimal",
+}
+winopts = vim.tbl_extend("error", winopts, auto_child)
+local win = vim.api.nvim_open_win(buf, true, winopts)
+
+-- 'win' is a window of 10x1 (10 width, 1 height) exactly where the input was wanted
+-- you can think of "NameInputPrompt" as a layout marker telling the popup where to fork
+```
+
