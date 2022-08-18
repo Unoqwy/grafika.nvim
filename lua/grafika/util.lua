@@ -79,6 +79,84 @@ function M.merge_h(components, opts)
     return types.Component(lines, hl_info, nil, height), last_rect
 end
 
+---Merges two components by overlapping one on top of another
+---@param lhs Component Base component
+---@param rhs Component Overlapping component (will be on top of lhs)
+---@param bounds? Rect Where can rhs overlap on lhs. This will do offsetting too
+---@return Component Merged component
+function M.merge_overlap(lhs, rhs, bounds)
+    err.expect_param("merge_overlap", "lhs", lhs)
+    err.expect_param("merge_overlap", "rhs", rhs)
+
+    bounds = bounds or types.Bounds()
+
+    local lines = vim.deepcopy(lhs.lines)
+    local hl_info = vim.deepcopy(lhs.hl_info)
+
+    -- data to move highlight groups
+    local hl_move = {}
+
+    local line_count = math.max(lhs:height(), rhs:height())
+    if bounds.height > -1 then
+        line_count = math.min(bounds.height, line_count)
+    end
+    local last_line = 0
+    for i = 1, line_count do
+        local to_merge = rhs.lines[i]
+        if to_merge ~= nil then
+            last_line = bounds.y + i
+            local line = lines[last_line] or ""
+
+            local offset = bounds.x
+            local line_width = vim.api.nvim_strwidth(line)
+            local width = vim.api.nvim_strwidth(to_merge)
+            if bounds.width > -1 and width > bounds.width then
+                width = bounds.width
+                to_merge = string.sub(to_merge, 0, vim.fn.byteidx(to_merge, width))
+            end
+
+            local hl_offset
+            if line_width <= offset then
+                hl_offset = #line
+                line = line .. string.rep(" ", offset - line_width) .. to_merge
+            else
+                local pre = string.sub(line, 0, vim.fn.byteidx(line, offset))
+                hl_offset = #pre
+                local post = string.sub(line, vim.fn.byteidx(line, offset + width) + 1, -1)
+                line = pre .. to_merge .. post
+            end
+
+            lines[last_line] = line
+            hl_move[i] = {
+                new_line = last_line,
+                offset = hl_offset,
+            }
+        end
+    end
+
+    for _, hl in ipairs(rhs.hl_info) do
+        local rect = hl.rect
+        local move_data = hl_move[rect.y]
+        if move_data ~= nil then
+            rect.x = rect.x + move_data.offset
+            if rect.width < 0 then
+                rect.width = #(rhs.lines[rect.y + 1] or "")
+            end
+            rect.y = move_data.new_line
+            table.insert(hl_info, hl)
+        end
+    end
+
+    -- make sure lines is a valid list
+    for i = 1, last_line do
+        if lines[i] == nil then
+            lines[i] = ""
+        end
+    end
+
+    return types.Component(lines, hl_info)
+end
+
 ---Checks if a position (x,y) is contained within a rect
 ---@param rect Rect
 ---@param x integer

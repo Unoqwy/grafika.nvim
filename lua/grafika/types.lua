@@ -149,7 +149,11 @@ function M.Component(lines, hl_info, display_width, height)
     }
 
     function o:height()
-        return height or #self.lines
+        if height ~= nil then
+            return height
+        end
+        height = #self.lines
+        return height
     end
 
     function o:display_width()
@@ -314,7 +318,7 @@ function M.SimpleComponent(text, hl_group)
     if type(hl_group) == "table" and vim.tbl_islist(hl_group) then
         hl_groups = hl_group
     else
-        hl_groups = {hl_group}
+        hl_groups = { hl_group }
     end
 
     local builder = M.ComponentBuilder()

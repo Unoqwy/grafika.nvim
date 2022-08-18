@@ -23,6 +23,7 @@ M.HighlightInfo = types.HighlightInfo
 M.SimpleComponent = types.SimpleComponent
 
 M.merge_h = util.merge_h
+M.merge_overlap = util.merge_overlap
 M.rect_contains = util.rect_contains
 -- more generic utils should not be included in prelude
 
