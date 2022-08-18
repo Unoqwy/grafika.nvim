@@ -224,10 +224,18 @@ function M.find_hl_groups(buf, ns_id, hl_group)
     return matches
 end
 
+---@alias BorderPosition "top-left"|"top-center"|"top-right"|"bottom-left"|"bottom-center"|"bottom-right"
+
+---@class BorderDecoration
+---@field str string Text to display
+---@field position? BorderPosition Position. Defaults to "top-center"
+---@field hl_group? string Highlight group
+
 ---@class CreateBorderOptions
 ---@field hl_border? string Highlight group for border chars
 ---@field hl_fill? string Highlight group for filler chars
 ---@field fill? string Filler char. Defaults to space
+---@field decoration? BorderDecoration|BorderDecoration[] A border decoration or several
 
 ---Creates a border as a component
 ---@param borderchars string|string[] Border chars
@@ -268,7 +276,59 @@ function M.create_comp_border(borderchars, width, height, opts)
             builder:append(border.right, hl_border)
         end
     end
-    return builder:build()
+    local comp = builder:build()
+
+    local decoration = opts.decoration or {}
+    if type(decoration) == "table" and decoration.str ~= nil then
+        decoration = { decoration } -- single decoration passed
+    end
+
+    for _, elt in ipairs(decoration) do
+        local str = elt.str or ""
+        local pos = elt.position or "top-center"
+
+        local x_pos, y_pos
+        if pos == "top-left" then
+            x_pos = "left"
+            y_pos = "top"
+        elseif pos == "top-center" then
+            x_pos = "center"
+            y_pos = "top"
+        elseif pos == "top-right" then
+            x_pos = "right"
+            y_pos = "top"
+        elseif pos == "bottom-left" then
+            x_pos = "left"
+            y_pos = "bottom"
+        elseif pos == "bottom-center" then
+            x_pos = "center"
+            y_pos = "bottom"
+        elseif pos == "bottom-right" then
+            x_pos = "right"
+            y_pos = "bottom"
+        else
+            err.log(string.format("Unknown border decoration position '%s'", pos))
+        end
+
+        local x, y
+        if x_pos == "left" then
+            x = 2
+        elseif x_pos == "center" then
+            x = math.floor((width - vim.api.nvim_strwidth(str)) / 2)
+        elseif x_pos == "right" then
+            x = math.max(width - vim.api.nvim_strwidth(str) - 2, 0)
+        end
+        if y_pos == "top" then
+            y = 0
+        elseif y_pos == "bottom" then
+            y = height - 1
+        end
+
+        local merge_bounds = types.Bounds(x, y, width - x, 1)
+        comp = M.merge_overlap(comp, types.SimpleComponent(str, elt.hl_group), merge_bounds)
+    end
+
+    return comp
 end
 
 ---Reads border chars into a usable table
