@@ -20,6 +20,7 @@ M.Bounds = types.Bounds
 M.Component = types.Component
 M.ComponentBuilder = types.ComponentBuilder
 M.HighlightInfo = types.HighlightInfo
+M.SimpleComponent = types.SimpleComponent
 
 M.merge_h = util.merge_h
 M.rect_contains = util.rect_contains

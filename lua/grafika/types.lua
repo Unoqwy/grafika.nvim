@@ -200,6 +200,7 @@ function M.ComponentBuilder()
         if hl_group ~= nil then
             table.insert(o.hl_info, M.HighlightInfo(M.Rect(0, #o.lines - 1, #str, 1), hl_group))
         end
+        return o
     end
 
     function o:comp(comp)
@@ -212,6 +213,7 @@ function M.ComponentBuilder()
             hl.rect.y = hl.rect.y + initial_line_count
             table.insert(o.hl_info, hl)
         end
+        return o
     end
 
     function o:append(str, hl_group)
@@ -224,12 +226,13 @@ function M.ComponentBuilder()
             table.insert(o.hl_info, M.HighlightInfo(M.Rect(#line, idx - 1, #str, 1), hl_group))
         end
         o.lines[idx] = line .. str
+        return o
     end
 
     function o:append_comp(comp)
         if #comp.lines ~= 1 then
             vim.api.nvim_err_writeln("grafika.nvim: ComponentBuilder:append_comp takes a component with only one line")
-            return
+            return o
         end
 
         comp = vim.deepcopy(comp)
@@ -241,13 +244,15 @@ function M.ComponentBuilder()
             hl.rect.y = hl.rect.y + (#o.lines - 1)
             table.insert(o.hl_info, hl)
         end
+        return o
     end
 
     function o:append_right(str, hl_group)
         if str == nil then
-            return
+            return o
         end
         table.insert(append_right, { #o.lines, str, hl_group })
+        return o
     end
 
     function o:build()
@@ -298,6 +303,29 @@ function M.HighlightInfo(rect, hl_group)
         rect = rect,
         hl_group = hl_group,
     }
+end
+
+---Simply creates a component
+---@param text string|string[] Text. Can be a string or a list of line
+---@param hl_group? string|string[] Highlght groups. Can be a string or a list of groups matching the number of lines
+---@return Component
+function M.SimpleComponent(text, hl_group)
+    local hl_groups
+    if type(hl_group) == "table" and vim.tbl_islist(hl_group) then
+        hl_groups = hl_group
+    else
+        hl_groups = {hl_group}
+    end
+
+    local builder = M.ComponentBuilder()
+    if type(text) == "table" and vim.tbl_islist(text) then
+        for i, line in ipairs(text) do
+            builder:line(line, hl_groups[i] or hl_groups[1])
+        end
+    else
+        builder:line(text, hl_groups[1])
+    end
+    return builder:build()
 end
 
 return M
