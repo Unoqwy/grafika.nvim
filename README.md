@@ -186,3 +186,23 @@ local win = vim.api.nvim_open_win(buf, true, winopts)
 -- you can think of "NameInputPrompt" as a layout marker telling the popup where to fork
 ```
 
+### Creating a prompt
+
+Creating prompt is a utility that does not use grafika features but can be quite convenient when paired with `auto_child`.
+
+```lua
+local winopts = ... -- your window options, this could be 'auto_child'
+
+-- this will create a floating window with a prompt buffer (':h prompt-buffer')
+local prompt = require("grafika/ext").create_prompt(winopts, {
+    ft = "myfiletype",
+    prefix = "> ",
+    on_close = function()
+        -- do something when prompt is closed
+    end,
+})
+
+-- later..
+prompt:close() -- deletes the buffer and close the window
+```
+
