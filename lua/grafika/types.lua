@@ -281,7 +281,7 @@ function M.ComponentBuilder()
                     display_width = display_width + math.abs(fill)
                 end
                 if append[3] ~= nil then
-                    table.insert(o.hl_info, M.HighlightInfo(M.Rect(#line, idx - 1, #append[2], 2), append[3]))
+                    table.insert(o.hl_info, M.HighlightInfo(M.Rect(#line, idx - 1, #append[2], 1), append[3]))
                 end
                 o.lines[idx] = line .. append[2]
             end
