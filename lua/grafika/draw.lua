@@ -29,6 +29,21 @@ function M.draw_component(canvas, comp, bounds)
         return
     end
 
+    if canvas.force_win_focus then
+        local cur_win = api.nvim_get_current_win()
+        if api.nvim_win_get_buf(cur_win) ~= canvas.buf then
+            if canvas.win == nil then
+                return
+            end
+            if cur_win ~= canvas.win then
+                api.nvim_win_call(canvas.win, function()
+                    M.draw_component(canvas, comp, bounds)
+                end)
+            end
+            return
+        end
+    end
+
     local buf, ns = canvas.buf, M.get_ns()
     local base_x, base_y = canvas.bounds.x + bounds.x, canvas.bounds.y + bounds.y
     local height = comp:height()

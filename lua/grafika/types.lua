@@ -11,6 +11,7 @@ local M = {}
 ---@field start_draw fun(self: Canvas) Start drawing on the canvas, unlock it
 ---@field stop_draw fun(self: Canvas) Stop drawing on the canvas, lock it back
 ---@field find_hl_groups fun(self: Canvas, hl_group: string) Finds regions matching a target highlight group within bounds
+---@field force_win_focus? boolean Whether to ensure the current window has the canvas buffer active
 ---
 ---@param buf integer Buffer handle to draw on
 ---@param bounds? Rect
