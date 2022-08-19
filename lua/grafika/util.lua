@@ -48,6 +48,7 @@ function M.merge_h(components, opts)
         stroffset = stroffset + width
 
         for _, hl in ipairs(comp.hl_info) do
+            hl = vim.deepcopy(hl)
             local rect = hl.rect
             local offset = #(lines[rect.y + 1] or "")
             rect.x = offset + rect.x
@@ -135,14 +136,15 @@ function M.merge_overlap(lhs, rhs, bounds)
     end
 
     for _, hl in ipairs(rhs.hl_info) do
-        local rect = hl.rect
-        local move_data = hl_move[rect.y]
+        local move_data = hl_move[hl.rect.y + 1]
         if move_data ~= nil then
+            hl = vim.deepcopy(hl)
+            local rect = hl.rect
             rect.x = rect.x + move_data.offset
             if rect.width < 0 then
                 rect.width = #(rhs.lines[rect.y + 1] or "")
             end
-            rect.y = move_data.new_line
+            rect.y = move_data.new_line - 1
             table.insert(hl_info, hl)
         end
     end
