@@ -269,7 +269,8 @@ function M.open_popup(comp, opts)
             return
         end
 
-        vim.api.nvim_win_set_config(win, calc_winopts())
+        local cur_winopts = vim.api.nvim_win_get_config(win)
+        vim.api.nvim_win_set_config(win, vim.tbl_extend("force", cur_winopts, calc_winopts()))
         canvas:draw_component(last_comp, bounds)
     end
 
